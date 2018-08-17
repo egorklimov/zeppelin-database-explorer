@@ -264,6 +264,9 @@ function explorerTreeInit() {
             'attribute': {
                 'icon': 'glyphicon glyphicon-tag my-glyphicon-color-tag',
                 'a_attr': { 'style': 'font-family: monospace' }
+            },
+            'folder': {
+                'icon': 'glyphicon glyphicon-folder-close my-glyphicon-color-folder',
             }
         },
         'sort': function (nodeId1, nodeId2) {
@@ -275,6 +278,18 @@ function explorerTreeInit() {
             }
             if (node1.type === 'universe' && node2.type === 'universe') {
                 return new Intl.Collator().compare(node1.text, node2.text);
+            }
+            if (node1.type === 'folder' && node2.type === 'folder') {
+                return new Intl.Collator().compare(node1.text, node2.text);
+            }
+            if (node1.type === 'dimension' && node2.type !== 'dimension' && node2.type !== 'universe') {
+                return new Intl.Collator().compare("a", "b");
+            }
+            if (node1.type === 'filter' && node2.type !== 'filter' && node2.type !== 'attribute') {
+                return new Intl.Collator().compare("b", "a");
+            }
+            if (node1.type === 'attribute' && node2.type !== 'attribute') {
+                return new Intl.Collator().compare("b", "a");
             }
         },
         'massload': {
@@ -304,7 +319,7 @@ function explorerTreeInit() {
                     if (node.type === "table") {
                         req['schemaId'] = node.parent;
                     }
-                    if (node.type === "dimension" || node.type === "measure" || node.type === "filter") {
+                    if (node.type === "dimension" || node.type === "measure" || node.type === "filter" || node.type === "folder") {
                         req['universeId'] = node.parent;
                     }
                     return req;
@@ -342,7 +357,7 @@ function explorerTreeInit() {
                             if (elem.type === 'table') {
                                 request += "&schemaId=" + elem.parent;
                             }
-                            if (elem.type === 'dimension' || elem.type === 'measure' || elem.type === 'filter') {
+                            if (elem.type === 'dimension' || elem.type === 'measure' || elem.type === 'filter' || elem.type === 'folder') {
                                 request += "&universeId=" + elem.parent;
                             }
                             databaseServerRequest(SERVER_URL + request, function () {
@@ -392,7 +407,7 @@ function explorerTreeInit() {
     }).on('load_node.jstree', function (event, data) {
         if (data.node.original && (data.node.original.type === 'table' ||
          data.node.original.type === 'dimension' || data.node.original.type === 'measure' ||
-         data.node.original.type === 'filter'))  {
+         data.node.original.type === 'filter' || data.node.original.type === 'folder'))  {
             let nodes = data.node.children.map(id => jstreeDOM.jstree(true).get_node(id));
             let maxLength = Math.max.apply(null, nodes.map(node => node.text.length)) + 3;
             nodes.forEach(function (node) {
@@ -581,6 +596,11 @@ function getNameWithParent(nodeId) {
 
         case 'filter':
             result = nodeParent.text + '.' + node.text;
+            break;
+
+        case 'folder':
+            var path = require('path');
+            result = nodeParent.text + path.sep + node.text;
             break;
 
         case 'attribute':
@@ -783,6 +803,10 @@ function injectCSS() {
 }
 
 .my-glyphicon-color-filter {
+    color: #d370e2 !important;
+}
+
+.my-glyphicon-color-folder {
     color: #d370e2 !important;
 }
 
